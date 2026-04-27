@@ -3,40 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Interface</title>
+    <title>AI Control</title>
     <style>
-        :root { --neon: #00f2ff; --crimson: #ff0055; --panel: rgba(10, 10, 10, 0.85); }
+        :root { --accent: #00f2ff; --glass: rgba(255, 255, 255, 0.05); }
         
         body { 
-            margin: 0; background: #000; color: #fff; font-family: 'Inter', sans-serif;
-            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+            margin: 0; padding: 0; background: #000; color: #fff;
+            font-family: 'Inter', -apple-system, sans-serif;
+            height: 100vh; display: flex; flex-direction: column;
+            overflow: hidden; transition: background 2s ease;
         }
 
-        /* Dynamic Kinetic Background */
-        #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; filter: blur(50px); opacity: 0.4; transition: 2s; }
-
-        header { 
-            padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.1);
+        /* Dynamic Gradient Background */
+        #dynamic-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; filter: blur(60px); opacity: 0.5;
+            background: linear-gradient(45deg, #0f0f0f, #001a1a, #1a0000);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
         }
 
-        #chat-flow { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 25px; scrollbar-width: none; }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Clean Header */
+        header {
+            padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px); display: flex; justify-content: space-between; align-items: center;
+        }
+
+        #chat-flow { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
         
-        .node { max-width: 75%; padding: 18px 25px; border-radius: 22px; line-height: 1.6; backdrop-filter: blur(10px); animation: emerge 0.4s ease; }
-        @keyframes emerge { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-        .user { align-self: flex-end; background: linear-gradient(135deg, rgba(0, 242, 255, 0.15), rgba(0, 242, 255, 0.05)); border: 1px solid var(--neon); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
-        .ai { align-self: flex-start; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .bubble { 
+            max-width: 80%; padding: 15px 22px; border-radius: 20px; 
+            font-size: 1rem; line-height: 1.5; backdrop-filter: blur(10px);
+        }
+        .user { align-self: flex-end; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); }
+        .bot { align-self: flex-start; background: var(--glass); border: 1px solid var(--accent); color: var(--accent); }
 
         /* Futuristic Input Dock */
-        .dock { 
+        .input-dock { 
             padding: 30px; display: flex; align-items: center; gap: 15px; 
             background: linear-gradient(transparent, #000);
         }
 
-        .input-wrapper { 
-            flex: 1; position: relative; display: flex; align-items: center; 
-            background: var(--panel); border: 1px solid #333; border-radius: 15px; padding-right: 10px;
+        .input-box {
+            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid #333;
+            border-radius: 15px; display: flex; align-items: center; padding-right: 10px;
         }
 
         input { 
@@ -44,98 +60,85 @@
             color: #fff; outline: none; font-size: 1rem;
         }
 
-        /* Cyber Icons */
         .icon-btn { 
-            background: transparent; border: none; cursor: pointer; display: flex; 
-            align-items: center; justify-content: center; transition: 0.3s;
+            background: transparent; border: none; cursor: pointer; padding: 5px;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s;
         }
 
-        .mic-icon { width: 30px; height: 30px; stroke: var(--neon); fill: none; stroke-width: 1.5; }
-        .send-icon { width: 25px; height: 25px; fill: var(--neon); opacity: 0.8; }
+        .icon-svg { width: 28px; height: 28px; fill: var(--accent); }
+        .mic-active { fill: #ff4444 !important; filter: drop-shadow(0 0 10px #ff4444); }
         
-        .listening .mic-icon { stroke: var(--crimson); filter: drop-shadow(0 0 8px var(--crimson)); }
-        
-        select { background: #000; color: var(--neon); border: 1px solid #333; padding: 6px; border-radius: 8px; font-size: 0.8rem; }
+        select { background: transparent; color: #fff; border: 1px solid #444; padding: 5px; border-radius: 5px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-<canvas id="canvas-bg"></canvas>
+<div id="dynamic-bg"></div>
 
 <header>
-    <div style="letter-spacing: 4px; font-size: 0.7rem; color: var(--neon);">SYSTEM.OS v5.2</div>
+    <div style="font-weight: 200; letter-spacing: 2px;">CORE INTERFACE</div>
     <div style="display: flex; gap: 10px;">
-        <select id="lang"><option value="en-IN">ENGLISH</option><option value="ta-IN">TAMIL</option></select>
-        <select id="gender"><option value="male">BASS MALE</option><option value="female">PRO FEMALE</option></select>
+        <select id="lang"><option value="en-IN">EN</option><option value="ta-IN">TA</option></select>
+        <select id="gender"><option value="male">MALE</option><option value="female">FEMALE</option></select>
     </div>
 </header>
 
 <div id="chat-flow"></div>
 
-<div class="dock">
-    <div class="input-wrapper">
-        <input type="text" id="textIn" placeholder="Enter Command..." onkeypress="if(event.key==='Enter') send()">
-        <button class="icon-btn" onclick="send()">
-            <svg class="send-icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+<div class="input-dock">
+    <div class="input-box">
+        <input type="text" id="textIn" placeholder="Enter message..." onkeypress="if(event.key==='Enter') sendMsg()">
+        <button class="icon-btn" onclick="sendMsg()">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
     </div>
-    <button class="icon-btn" id="micBtn" onclick="toggleMic()">
-        <svg class="mic-icon" viewBox="0 0 24 24" id="micSvg"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    <button class="icon-btn" id="micBtn" onclick="startVoice()">
+        <svg class="icon-svg" id="micIcon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
     </button>
 </div>
 
 <script>
     const flow = document.getElementById('chat-flow');
-    const canvas = document.getElementById('canvas-bg');
-    const ctx = canvas.getContext('2d');
+    const bg = document.getElementById('dynamic-bg');
     const synth = window.speechSynthesis;
     let recognition;
 
-    // Background Animation
-    function animateBG(color1, color2) {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
-        grad.addColorStop(0, color1);
-        grad.addColorStop(1, color2);
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    animateBG('#1a1a1a', '#000');
-
-    function addNode(text, isUser) {
+    function addBubble(text, isUser) {
         const div = document.createElement('div');
-        div.className = `node ${isUser ? 'user' : 'ai'}`;
+        div.className = `bubble ${isUser ? 'user' : 'bot'}`;
         div.innerText = text;
         flow.appendChild(div);
         flow.scrollTo({ top: flow.scrollHeight, behavior: 'smooth' });
     }
 
-    async function send() {
+    async function sendMsg() {
         const input = document.getElementById('textIn');
         if(!input.value) return;
         const msg = input.value;
         input.value = '';
-        addNode(msg, true);
+        addBubble(msg, true);
         process(msg);
     }
 
-    function toggleMic() {
+    function startVoice() {
         if (!recognition) {
             recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.lang = document.getElementById('lang').value;
+            
             recognition.onstart = () => {
-                document.getElementById('micBtn').classList.add('listening');
-                animateBG('#440011', '#000');
+                document.getElementById('micIcon').classList.add('mic-active');
+                bg.style.background = "linear-gradient(45deg, #2b0000, #440000, #000)";
             };
+            
             recognition.onresult = (e) => {
                 const text = e.results[0][0].transcript;
-                addNode(text, true);
+                addBubble(text, true);
                 process(text);
             };
+            
             recognition.onend = () => {
-                document.getElementById('micBtn').classList.remove('listening');
-                animateBG('#001122', '#000');
+                document.getElementById('micIcon').classList.remove('mic-active');
+                bg.style.background = "linear-gradient(45deg, #0f0f0f, #001a1a, #1a0000)";
                 recognition = null;
             };
             recognition.start();
@@ -149,7 +152,7 @@
             body: JSON.stringify({ message: text })
         });
         const data = await response.json();
-        addNode(data.reply, false);
+        addBubble(data.reply, false);
         speak(data.reply);
     }
 
@@ -158,15 +161,14 @@
         const mode = document.getElementById('gender').value;
         const voices = synth.getVoices();
 
+        // Using default system voices as requested
         if (mode === 'male') {
-            // "BASS MALE" REPLICATION: High-quality UK/US voices with severe pitch drop
-            utterance.voice = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('David')) || voices[0];
-            utterance.pitch = 0.4; // Extremely deep
-            utterance.rate = 0.85; // Authoritative speed
-        } else {
-            // "PRO FEMALE" REPLICATION: Smooth, natural cadence
-            utterance.voice = voices.find(v => v.name.includes('Natural') || v.name.includes('Google US English') || v.name.includes('Zira')) || voices[0];
+            utterance.voice = voices.find(v => v.name.includes('Male') || v.name.includes('David')) || voices[0];
             utterance.pitch = 1.0; 
+            utterance.rate = 1.0;
+        } else {
+            utterance.voice = voices.find(v => v.name.includes('Female') || v.name.includes('Zira')) || voices[0];
+            utterance.pitch = 1.0;
             utterance.rate = 1.0;
         }
 
