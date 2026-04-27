@@ -3,148 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.R.V.I.S. TERMINAL</title>
+    <title>J.A.R.V.I.S. NEXUS</title>
     <style>
         :root {
-            --neon-blue: #00f2ff;
-            --dark-glass: rgba(15, 15, 15, 0.85);
-            --border-glow: 0 0 15px rgba(0, 242, 255, 0.3);
+            --neon-cyan: #00f2ff;
+            --neon-purple: #bc13fe;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(0, 242, 255, 0.3);
         }
 
         body {
             margin: 0;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%);
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #050505;
+            background-image: linear-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: white;
+            font-family: 'Orbitron', sans-serif; /* You can link this font from Google Fonts */
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        /* Top Bar */
+        /* Futuristic Header */
         header {
-            padding: 20px;
-            background: var(--dark-glass);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #333;
+            padding: 15px 25px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-bottom: 2px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: var(--border-glow);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
         }
 
-        .status-dot {
-            width: 10px; height: 10px;
-            background: var(--neon-blue);
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-            box-shadow: 0 0 10px var(--neon-blue);
-        }
-
-        select {
-            background: #222;
-            color: var(--neon-blue);
-            border: 1px solid #444;
-            padding: 8px 12px;
-            border-radius: 8px;
-            outline: none;
+        .voice-selector {
+            background: black;
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            padding: 5px 15px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            font-size: 0.7rem;
             cursor: pointer;
         }
 
-        /* Chat History */
+        /* Chat Area */
         #chat-window {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            scrollbar-width: none;
+            gap: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-cyan) transparent;
         }
 
         .bubble {
-            max-width: 85%;
-            padding: 15px 20px;
-            border-radius: 18px;
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 15px;
+            font-family: sans-serif;
             font-size: 0.95rem;
-            line-height: 1.5;
-            position: relative;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
         }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .user {
             align-self: flex-end;
-            background: rgba(0, 242, 255, 0.1);
-            border: 1px solid rgba(0, 242, 255, 0.4);
-            border-bottom-right-radius: 2px;
-            color: var(--neon-blue);
+            background: linear-gradient(135deg, rgba(0, 242, 255, 0.2), rgba(188, 19, 254, 0.2));
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
         }
 
         .bot {
             align-self: flex-start;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--glass);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-bottom-left-radius: 2px;
+            color: #ddd;
         }
 
-        /* Floating Mic Button */
+        /* Voice Core (Mic Button) */
         .footer {
-            padding: 30px;
+            height: 120px;
             display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
             background: linear-gradient(transparent, #000);
         }
 
+        .core-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
         .mic-btn {
-            width: 80px; height: 80px;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
-            border: 2px solid var(--neon-blue);
-            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            background: black;
             cursor: pointer;
+            z-index: 2;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: var(--border-glow);
-            transition: all 0.3s ease;
+            transition: 0.3s;
         }
 
-        .mic-btn:hover { background: rgba(0, 242, 255, 0.1); }
-        
-        .pulse {
-            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-            background: rgba(255, 50, 50, 0.2) !important;
-            border-color: #ff3232 !important;
+        .pulse-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--neon-cyan);
+            border-radius: 50%;
+            animation: core-pulse 2s infinite;
         }
 
-        @keyframes pulse-ring {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 50, 50, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 50, 50, 0); }
-            100% { transform: scale(1); }
+        @keyframes core-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.8); opacity: 0; }
         }
 
-        .mic-icon { fill: var(--neon-blue); width: 35px; }
+        .listening {
+            border-color: #ff0055 !important;
+            box-shadow: 0 0 20px #ff0055;
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <div><span class="status-dot"></span><span style="letter-spacing: 2px; font-size: 0.8rem; color: #888;">SYSTEM ONLINE</span></div>
-    <select id="voiceMode">
-        <option value="male">J.A.R.V.I.S. (M)</option>
-        <option value="female">FRIDAY (F)</option>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-cyan);"></div>
+        <span style="letter-spacing: 3px; font-size: 0.9rem;">J.A.R.V.I.S. v4.0</span>
+    </div>
+    <select class="voice-selector" id="voiceToggle">
+        <option value="male">Protocol: Male</option>
+        <option value="female">Protocol: Female</option>
     </select>
 </header>
 
 <div id="chat-window">
-    <div class="bubble bot">Systems stabilized. How can I assist with your ECE projects today, Ridhu?</div>
+    <div class="bubble bot">Welcome back, Ridhu. All systems nominal. Ready to brainstorm or run a simulation?</div>
 </div>
 
 <div class="footer">
-    <button class="mic-btn" id="micBtn" onclick="startJarvis()">
-        <svg class="mic-icon" id="micSvg" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-    </button>
+    <div class="core-container">
+        <div class="pulse-ring" id="ring"></div>
+        <button class="mic-btn" id="micBtn" onclick="startNEXUS()">
+            <svg style="width:30px; height:30px; fill:var(--neon-cyan)" id="micIcon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+        </button>
+    </div>
+    <p style="font-size: 0.6rem; margin-top: 10px; color: var(--neon-cyan); letter-spacing: 2px;">NEURAL INTERFACE ACTIVE</p>
 </div>
 
 <script>
@@ -159,18 +178,16 @@
         chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
     }
 
-    async function startJarvis() {
+    async function startNEXUS() {
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = 'en-US';
-
         recognition.onstart = () => {
-            document.getElementById('micBtn').classList.add('pulse');
-            document.getElementById('micSvg').style.fill = "#ff3232";
+            document.getElementById('micBtn').classList.add('listening');
+            document.getElementById('ring').style.borderColor = "#ff0055";
         };
         
         recognition.onresult = async (event) => {
-            document.getElementById('micBtn').classList.remove('pulse');
-            document.getElementById('micSvg').style.fill = "var(--neon-blue)";
+            document.getElementById('micBtn').classList.remove('listening');
+            document.getElementById('ring').style.borderColor = "var(--neon-cyan)";
             
             const transcript = event.results[0][0].transcript;
             addBubble(transcript, true);
@@ -185,31 +202,21 @@
             addBubble(data.reply, false);
             speak(data.reply);
         };
-
         recognition.start();
     }
 
     function speak(text) {
         const utterance = new SpeechSynthesisUtterance(text);
-        const mode = document.getElementById('voiceMode').value;
-        const voices = synth.getVoices();
-
+        const mode = document.getElementById('voiceToggle').value;
         if (mode === 'male') {
-            // Force a deep voice by lowering pitch and rate significantly
-            utterance.pitch = 0.5; // Very deep
-            utterance.rate = 0.85; // Slower, authoritative
-            utterance.voice = voices.find(v => v.name.includes('Male') || v.name.includes('Guy') || v.name.includes('Microsoft David')) || voices[0];
+            utterance.pitch = 0.55;
+            utterance.rate = 0.9;
         } else {
-            utterance.pitch = 1.3; // Higher
-            utterance.rate = 1.0; 
-            utterance.voice = voices.find(v => v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Google US English')) || voices[0];
+            utterance.pitch = 1.3;
+            utterance.rate = 1.0;
         }
         synth.speak(utterance);
     }
-
-    // Chrome hack: Voices aren't loaded immediately
-    window.speechSynthesis.onvoiceschanged = () => synth.getVoices();
 </script>
-
 </body>
 </html>
