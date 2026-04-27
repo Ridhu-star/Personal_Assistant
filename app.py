@@ -22,7 +22,7 @@ def chat():
         print(f"DEBUG: Ridhu said: {user_input}")
         
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile"
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": "You are Ridhu's friendly ECE assistant. Address him as Ridhu."},
                 {"role": "user", "content": user_input}
