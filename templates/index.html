@@ -5,76 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Interface</title>
     <style>
-        :root { --neon: #00f2ff; --glass: rgba(255, 255, 255, 0.05); }
-        body { 
-            margin: 0; background: #000; color: #fff; font-family: 'Segoe UI', sans-serif;
-            height: 100vh; display: flex; flex-direction: column; transition: 1s;
-        }
+        :root { --neon: #00f2ff; --crimson: #ff0055; --panel: rgba(10, 10, 10, 0.85); }
         
-        /* Dynamic Glow Background */
-        #glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.2; transition: 1.5s; }
+        body { 
+            margin: 0; background: #000; color: #fff; font-family: 'Inter', sans-serif;
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* Dynamic Kinetic Background */
+        #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; filter: blur(50px); opacity: 0.4; transition: 2s; }
 
         header { 
-            padding: 20px; background: var(--glass); backdrop-filter: blur(15px);
-            border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; 
+            padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        #chat-flow { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 20px; }
+        #chat-flow { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 25px; scrollbar-width: none; }
         
-        .node { max-width: 80%; padding: 15px 22px; border-radius: 20px; line-height: 1.5; backdrop-filter: blur(5px); }
-        .user { align-self: flex-end; background: rgba(0, 242, 255, 0.1); border: 1px solid var(--neon); color: var(--neon); }
-        .ai { align-self: flex-start; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); }
+        .node { max-width: 75%; padding: 18px 25px; border-radius: 22px; line-height: 1.6; backdrop-filter: blur(10px); animation: emerge 0.4s ease; }
+        @keyframes emerge { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Multi-Modal Input Dock */
+        .user { align-self: flex-end; background: linear-gradient(135deg, rgba(0, 242, 255, 0.15), rgba(0, 242, 255, 0.05)); border: 1px solid var(--neon); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        .ai { align-self: flex-start; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+
+        /* Futuristic Input Dock */
         .dock { 
-            padding: 25px; background: rgba(10, 10, 10, 0.9); border-top: 1px solid #222;
-            display: flex; align-items: center; gap: 12px;
+            padding: 30px; display: flex; align-items: center; gap: 15px; 
+            background: linear-gradient(transparent, #000);
+        }
+
+        .input-wrapper { 
+            flex: 1; position: relative; display: flex; align-items: center; 
+            background: var(--panel); border: 1px solid #333; border-radius: 15px; padding-right: 10px;
         }
 
         input { 
-            flex: 1; background: #111; border: 1px solid #333; padding: 14px; 
-            border-radius: 12px; color: #fff; outline: none; transition: 0.3s;
+            width: 100%; background: transparent; border: none; padding: 15px 20px; 
+            color: #fff; outline: none; font-size: 1rem;
         }
-        input:focus { border-color: var(--neon); }
 
-        .btn { 
-            background: none; border: 1px solid #444; color: #fff; padding: 12px; 
-            border-radius: 12px; cursor: pointer; transition: 0.3s;
+        /* Cyber Icons */
+        .icon-btn { 
+            background: transparent; border: none; cursor: pointer; display: flex; 
+            align-items: center; justify-content: center; transition: 0.3s;
         }
-        .mic-on { color: #ff0055 !important; border-color: #ff0055 !important; box-shadow: 0 0 15px #ff0055; }
+
+        .mic-icon { width: 30px; height: 30px; stroke: var(--neon); fill: none; stroke-width: 1.5; }
+        .send-icon { width: 25px; height: 25px; fill: var(--neon); opacity: 0.8; }
         
-        select { background: #000; color: var(--neon); border: 1px solid #333; padding: 5px; border-radius: 5px; }
+        .listening .mic-icon { stroke: var(--crimson); filter: drop-shadow(0 0 8px var(--crimson)); }
+        
+        select { background: #000; color: var(--neon); border: 1px solid #333; padding: 6px; border-radius: 8px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-    <div id="glow"></div>
-    <header>
-        <div style="font-size: 0.7rem; letter-spacing: 3px;">SYSTEM ACTIVE</div>
-        <div>
-            <select id="lang">
-                <option value="en-IN">English</option>
-                <option value="ta-IN">Tamil</option>
-            </select>
-            <select id="gender">
-                <option value="male">Protocol: M</option>
-                <option value="female">Protocol: F</option>
-            </select>
-        </div>
-    </header>
 
-    <div id="chat-flow"></div>
+<canvas id="canvas-bg"></canvas>
 
-    <div class="dock">
-        <input type="text" id="textIn" placeholder="Type command..." onkeypress="if(event.key==='Enter') transmitText()">
-        <button id="mic" onclick="toggleMic()">🎤</button>
-        <button onclick="transmitText()">➤</button>
+<header>
+    <div style="letter-spacing: 4px; font-size: 0.7rem; color: var(--neon);">SYSTEM.OS v5.2</div>
+    <div style="display: flex; gap: 10px;">
+        <select id="lang"><option value="en-IN">ENGLISH</option><option value="ta-IN">TAMIL</option></select>
+        <select id="gender"><option value="male">BASS MALE</option><option value="female">PRO FEMALE</option></select>
     </div>
+</header>
+
+<div id="chat-flow"></div>
+
+<div class="dock">
+    <div class="input-wrapper">
+        <input type="text" id="textIn" placeholder="Enter Command..." onkeypress="if(event.key==='Enter') send()">
+        <button class="icon-btn" onclick="send()">
+            <svg class="send-icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+    </div>
+    <button class="icon-btn" id="micBtn" onclick="toggleMic()">
+        <svg class="mic-icon" viewBox="0 0 24 24" id="micSvg"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+</div>
 
 <script>
     const flow = document.getElementById('chat-flow');
-    const glow = document.getElementById('glow');
+    const canvas = document.getElementById('canvas-bg');
+    const ctx = canvas.getContext('2d');
     const synth = window.speechSynthesis;
     let recognition;
+
+    // Background Animation
+    function animateBG(color1, color2) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
+        grad.addColorStop(0, color1);
+        grad.addColorStop(1, color2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    animateBG('#1a1a1a', '#000');
 
     function addNode(text, isUser) {
         const div = document.createElement('div');
@@ -84,8 +111,7 @@
         flow.scrollTo({ top: flow.scrollHeight, behavior: 'smooth' });
     }
 
-    // Text Transmission
-    async function transmitText() {
+    async function send() {
         const input = document.getElementById('textIn');
         if(!input.value) return;
         const msg = input.value;
@@ -94,26 +120,22 @@
         process(msg);
     }
 
-    // High-Accuracy Voice Transmission
     function toggleMic() {
         if (!recognition) {
             recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.lang = document.getElementById('lang').value;
-            
             recognition.onstart = () => {
-                document.getElementById('mic').classList.add('mic-on');
-                glow.style.background = "radial-gradient(circle, #330000 0%, #000 100%)";
+                document.getElementById('micBtn').classList.add('listening');
+                animateBG('#440011', '#000');
             };
-            
             recognition.onresult = (e) => {
                 const text = e.results[0][0].transcript;
                 addNode(text, true);
                 process(text);
             };
-            
             recognition.onend = () => {
-                document.getElementById('mic').classList.remove('mic-on');
-                glow.style.background = "none";
+                document.getElementById('micBtn').classList.remove('listening');
+                animateBG('#001122', '#000');
                 recognition = null;
             };
             recognition.start();
@@ -133,17 +155,18 @@
 
     function speak(text) {
         const utterance = new SpeechSynthesisUtterance(text);
-        const voices = synth.getVoices();
         const mode = document.getElementById('gender').value;
+        const voices = synth.getVoices();
 
         if (mode === 'male') {
-            // Find deep male voice or apply frequency shift
-            utterance.voice = voices.find(v => v.name.includes('David') || v.name.includes('Google UK English Male')) || voices[0];
-            utterance.pitch = 0.5; // Deep resonance
-            utterance.rate = 0.9;
+            // "BASS MALE" REPLICATION: High-quality UK/US voices with severe pitch drop
+            utterance.voice = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('David')) || voices[0];
+            utterance.pitch = 0.4; // Extremely deep
+            utterance.rate = 0.85; // Authoritative speed
         } else {
-            utterance.voice = voices.find(v => v.name.includes('Female') || v.name.includes('Google US English')) || voices[0];
-            utterance.pitch = 1.1;
+            // "PRO FEMALE" REPLICATION: Smooth, natural cadence
+            utterance.voice = voices.find(v => v.name.includes('Natural') || v.name.includes('Google US English') || v.name.includes('Zira')) || voices[0];
+            utterance.pitch = 1.0; 
             utterance.rate = 1.0;
         }
 
