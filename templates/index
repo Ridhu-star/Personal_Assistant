@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S.</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0a; color: #00ffcc; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        #status { font-size: 1.2rem; margin-bottom: 20px; text-align: center; padding: 0 20px; }
+        .mic-btn { width: 100px; height: 100px; border-radius: 50%; border: 2px solid #00ffcc; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 0 15px #00ffcc; }
+        .mic-btn:active { transform: scale(0.9); box-shadow: 0 0 30px #00ffcc; }
+        .mic-icon { fill: #00ffcc; width: 40px; height: 40px; }
+        .pulse { animation: pulse-animation 1.5s infinite; }
+        @keyframes pulse-animation { 0% { box-shadow: 0 0 0 0px rgba(0, 255, 204, 0.7); } 100% { box-shadow: 0 0 0 20px rgba(0, 255, 204, 0); } }
+    </style>
+</head>
+<body>
+    <div id="status">Tap to speak to J.A.R.V.I.S.</div>
+    
+    <button class="mic-btn" id="micButton" onclick="startJarvis()">
+        <svg class="mic-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+    </button>
+
+    <script>
+        const statusText = document.getElementById('status');
+        const micBtn = document.getElementById('micButton');
+        const synth = window.speechSynthesis;
+
+        function startJarvis() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                statusText.innerText = "Listening...";
+                micBtn.classList.add('pulse');
+            };
+
+            recognition.onresult = async (event) => {
+                const transcript = event.results[0][0].transcript;
+                statusText.innerText = "Thinking...";
+                micBtn.classList.remove('pulse');
+
+                // Send to Flask Backend
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: transcript })
+                });
+
+                const data = await response.json();
+                statusText.innerText = data.reply;
+
+                // Speak back
+                const utterance = new SpeechSynthesisUtterance(data.reply);
+                utterance.rate = 1.1; // Slightly faster for a modern feel
+                synth.speak(utterance);
+            };
+
+            recognition.onerror = () => {
+                statusText.innerText = "Error. Try again.";
+                micBtn.classList.remove('pulse');
+            };
+
+            recognition.start();
+        }
+    </script>
+</body>
+</html>
