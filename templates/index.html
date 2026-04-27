@@ -3,98 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.R.V.I.S. 2.0</title>
+    <title>J.A.R.V.I.S. TERMINAL</title>
     <style>
-        :root { --bg: #050505; --accent: #00f2ff; --user-msg: #1a1a1a; --bot-msg: #002b2e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        :root {
+            --neon-blue: #00f2ff;
+            --dark-glass: rgba(15, 15, 15, 0.85);
+            --border-glow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        body {
+            margin: 0;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%);
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Bar */
+        header {
+            padding: 20px;
+            background: var(--dark-glass);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--border-glow);
+        }
+
+        .status-dot {
+            width: 10px; height: 10px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        select {
+            background: #222;
+            color: var(--neon-blue);
+            border: 1px solid #444;
+            padding: 8px 12px;
+            border-radius: 8px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Chat History */
+        #chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scrollbar-width: none;
+        }
+
+        .bubble {
+            max-width: 85%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .user {
+            align-self: flex-end;
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid rgba(0, 242, 255, 0.4);
+            border-bottom-right-radius: 2px;
+            color: var(--neon-blue);
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 2px;
+        }
+
+        /* Floating Mic Button */
+        .footer {
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            background: linear-gradient(transparent, #000);
+        }
+
+        .mic-btn {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-blue);
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--border-glow);
+            transition: all 0.3s ease;
+        }
+
+        .mic-btn:hover { background: rgba(0, 242, 255, 0.1); }
         
-        /* Header & Voice Toggle */
-        header { padding: 15px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-        select { background: #222; color: var(--accent); border: 1px solid var(--accent); padding: 5px; border-radius: 5px; }
+        .pulse {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            background: rgba(255, 50, 50, 0.2) !important;
+            border-color: #ff3232 !important;
+        }
 
-        /* Chat History Window */
-        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 15px; line-height: 1.4; font-size: 0.95rem; }
-        .user { align-self: flex-end; background: var(--user-msg); border-bottom-right-radius: 2px; }
-        .bot { align-self: flex-start; background: var(--bot-msg); border: 1px solid #004d4d; border-bottom-left-radius: 2px; }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 50, 50, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 50, 50, 0); }
+            100% { transform: scale(1); }
+        }
 
-        /* Controls */
-        .controls { padding: 20px; display: flex; justify-content: center; background: #0a0a0a; }
-        .mic-btn { width: 70px; height: 70px; border-radius: 50%; border: none; background: var(--accent); cursor: pointer; box-shadow: 0 0 15px var(--accent); transition: 0.3s; }
-        .mic-btn:active { transform: scale(0.9); }
-        .pulse { animation: pulse-red 1.5s infinite; background: #ff4444 !important; box-shadow: 0 0 15px #ff4444 !important; }
-        @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .mic-icon { fill: var(--neon-blue); width: 35px; }
     </style>
 </head>
 <body>
-    <header>
-        <span style="color: var(--accent); font-weight: bold;">J.A.R.V.I.S. Online</span>
-        <select id="voiceSelect">
-            <option value="male">Male Voice</option>
-            <option value="female">Female Voice</option>
-        </select>
-    </header>
 
-    <div id="chat-container">
-        <div class="msg bot">Hello Ridhu. Ready for some ECE innovation?</div>
-    </div>
+<header>
+    <div><span class="status-dot"></span><span style="letter-spacing: 2px; font-size: 0.8rem; color: #888;">SYSTEM ONLINE</span></div>
+    <select id="voiceMode">
+        <option value="male">J.A.R.V.I.S. (M)</option>
+        <option value="female">FRIDAY (F)</option>
+    </select>
+</header>
 
-    <div class="controls">
-        <button class="mic-btn" id="micBtn" onclick="startJarvis()">🎤</button>
-    </div>
+<div id="chat-window">
+    <div class="bubble bot">Systems stabilized. How can I assist with your ECE projects today, Ridhu?</div>
+</div>
 
-    <script>
-        const chatContainer = document.getElementById('chat-container');
-        const synth = window.speechSynthesis;
+<div class="footer">
+    <button class="mic-btn" id="micBtn" onclick="startJarvis()">
+        <svg class="mic-icon" id="micSvg" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+    </button>
+</div>
 
-        function addMessage(text, isUser) {
-            const div = document.createElement('div');
-            div.className = `msg ${isUser ? 'user' : 'bot'}`;
-            div.innerText = text;
-            chatContainer.appendChild(div);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
+<script>
+    const chatWindow = document.getElementById('chat-window');
+    const synth = window.speechSynthesis;
 
-        async function startJarvis() {
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = 'en-US';
+    function addBubble(text, isUser) {
+        const div = document.createElement('div');
+        div.className = `bubble ${isUser ? 'user' : 'bot'}`;
+        div.innerText = text;
+        chatWindow.appendChild(div);
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+    }
 
-            recognition.onstart = () => document.getElementById('micBtn').classList.add('pulse');
+    async function startJarvis() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+            document.getElementById('micBtn').classList.add('pulse');
+            document.getElementById('micSvg').style.fill = "#ff3232";
+        };
+        
+        recognition.onresult = async (event) => {
+            document.getElementById('micBtn').classList.remove('pulse');
+            document.getElementById('micSvg').style.fill = "var(--neon-blue)";
             
-            recognition.onresult = async (event) => {
-                document.getElementById('micBtn').classList.remove('pulse');
-                const transcript = event.results[0][0].transcript;
-                addMessage(transcript, true);
+            const transcript = event.results[0][0].transcript;
+            addBubble(transcript, true);
 
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: transcript })
-                });
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: transcript })
+            });
 
-                const data = await response.json();
-                addMessage(data.reply, false);
-                speak(data.reply);
-            };
+            const data = await response.json();
+            addBubble(data.reply, false);
+            speak(data.reply);
+        };
 
-            recognition.start();
+        recognition.start();
+    }
+
+    function speak(text) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const mode = document.getElementById('voiceMode').value;
+        const voices = synth.getVoices();
+
+        if (mode === 'male') {
+            // Force a deep voice by lowering pitch and rate significantly
+            utterance.pitch = 0.5; // Very deep
+            utterance.rate = 0.85; // Slower, authoritative
+            utterance.voice = voices.find(v => v.name.includes('Male') || v.name.includes('Guy') || v.name.includes('Microsoft David')) || voices[0];
+        } else {
+            utterance.pitch = 1.3; // Higher
+            utterance.rate = 1.0; 
+            utterance.voice = voices.find(v => v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Google US English')) || voices[0];
         }
+        synth.speak(utterance);
+    }
 
-        function speak(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            const voices = synth.getVoices();
-            const mode = document.getElementById('voiceSelect').value;
+    // Chrome hack: Voices aren't loaded immediately
+    window.speechSynthesis.onvoiceschanged = () => synth.getVoices();
+</script>
 
-            // Simple logic to find a voice based on gender
-            if (mode === 'female') {
-                utterance.voice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Female')) || voices[0];
-                utterance.pitch = 1.2;
-            } else {
-                utterance.voice = voices.find(v => v.name.includes('Male') || v.name.includes('Guy')) || voices[1];
-                utterance.pitch = 0.8;
-            }
-            synth.speak(utterance);
-        }
-    </script>
 </body>
 </html>
