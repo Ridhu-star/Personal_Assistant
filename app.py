@@ -1,13 +1,15 @@
 from flask import Flask, render_template, request, jsonify
 from groq import Groq
 import os
-import traceback  # Added for debugging
 
 app = Flask(__name__)
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-# This looks for the key in Render Environment Variables
-API_KEY = os.environ.get("GROQ_API_KEY")
-client = Groq(api_key=API_KEY)
+# --- MEMORY CONFIGURATION ---
+# This list will store the conversation history
+conversation_history = [
+    {"role": "system", "content": "You are Ridhu's friendly ECE assistant. Address him as Ridhu. Remember previous details he tells you about his projects or studies."}
+]
 
 @app.route('/')
 def index():
@@ -15,27 +17,34 @@ def index():
 
 @app.route('/chat', methods=['POST'])
 def chat():
+    global conversation_history
     try:
         user_input = request.json.get("message")
         
-        # Log exactly what we are sending to Groq
-        print(f"DEBUG: Ridhu said: {user_input}")
+        # 1. Add user's new message to memory
+        conversation_history.append({"role": "user", "content": user_input})
         
+        # 2. Keep only the last 10 messages + the System Prompt
+        # This prevents the "Brain" from getting overloaded
+        if len(conversation_history) > 11:
+            conversation_history = [conversation_history[0]] + conversation_history[-10:]
+
+        # 3. Send the WHOLE history to Groq
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": "You are Ridhu's friendly ECE assistant. Address him as Ridhu."},
-                {"role": "user", "content": user_input}
-            ]
+            messages=conversation_history
         )
+        
         reply = completion.choices[0].message.content
+        
+        # 4. Add the Assistant's reply to memory so he remembers what he said
+        conversation_history.append({"role": "assistant", "content": reply})
+        
         return jsonify({"reply": reply})
         
     except Exception as e:
-        # CRITICAL: This prints the EXACT error to your Render Logs
-        print("--- DATABASE/API ERROR ---")
-        traceback.print_exc() 
-        return jsonify({"reply": "Sorry Ridhu, I had a connection glitch."}), 500
+        print(f"ERROR: {e}")
+        return jsonify({"reply": "Sorry Ridhu, my memory circuits glitched."}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
