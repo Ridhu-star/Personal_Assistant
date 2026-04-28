@@ -7,10 +7,20 @@
     <style>
         :root { --accent: #00f2ff; --glass: rgba(255, 255, 255, 0.05); }
         
+        html, body {
+            /* This ensures the root elements don't over-expand */
+            height: 100%;
+        }
+
         body { 
             margin: 0; padding: 0; background: #000; color: #fff;
             font-family: 'Inter', -apple-system, sans-serif;
-            height: 100vh; display: flex; flex-direction: column;
+            
+            /* The WhatsApp Fix: */
+            height: 100vh; /* Fallback for older browsers */
+            height: 100dvh; /* Dynamic height that respects in-app browser menus */
+            
+            display: flex; flex-direction: column;
             overflow: hidden; transition: background 2s ease;
         }
 
